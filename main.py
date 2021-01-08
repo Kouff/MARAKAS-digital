@@ -1,3 +1,5 @@
+import os
+import csv
 from flask import Flask, request, views
 from flask_sqlalchemy import SQLAlchemy
 
@@ -24,6 +26,28 @@ class Review(db.Model):
     product = db.relationship(Product, backref=db.backref('reviews', lazy=True))
 
 
+def init_db():
+    def find_product(query, asin: str):
+        for obj in query:
+            if obj.asin == asin:
+                return obj
+
+    csv_path = "Products.csv"
+    with open(csv_path, "r") as f_obj:
+        reader = csv.DictReader(f_obj)
+        for row in reader:
+            product = Product(asin=row['Asin'], title=row['Title'])
+            db.session.add(product)
+    csv_path = "Reviews.csv"
+    products = Product.query.all()
+    with open(csv_path, "r") as f_obj:
+        reader = csv.DictReader(f_obj)
+        for row in reader:
+            review = Review(review=row['Review'], title=row['Title'], product=find_product(products, row['Asin']))
+            db.session.add(review)
+    db.session.commit()
+
+
 class ProductView(views.MethodView):
 
     def get(self, id):
@@ -35,6 +59,11 @@ class ProductView(views.MethodView):
 
 app.add_url_rule('/<int:id>/', view_func=ProductView.as_view('products'))
 
-
 if __name__ == "__main__":
+    engine = db.get_engine()
+    if not os.path.exists(db_name):
+        db.create_all()
+        init_db()
+    elif not engine.dialect.has_table(engine, 'Product'):
+        init_db()
     app.run(debug=True)
