@@ -99,12 +99,12 @@ class ProductDetailView(views.MethodView):
         return data  # return validated data
 
     def get(self, id):
-        product = Product.query.get(id)  # get a product by id
+        product = Product.query.get_or_404(id)  # get a product by id
         return jsonify(product.json(reviews=True))  # send the response with the product data
 
     def put(self, id):
         data = self.validate_data()  # get validated data
-        product = Product.query.get(id)  # get a product by id
+        product = Product.query.get_or_404(id)  # get a product by id
         # create a new review for the product
         review = Review(review=data['review'], title=data['title'], product=product)
         db.session.add(review)
