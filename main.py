@@ -39,7 +39,7 @@ class Product(db.Model):
 class Review(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(250))
-    review = db.Column(db.String(250))
+    review = db.Column(db.String(6500))
     product_id = db.Column(db.Integer, db.ForeignKey('product.id'))
     product = db.relationship(Product, backref=db.backref('reviews', lazy=True))
 
