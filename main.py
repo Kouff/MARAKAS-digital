@@ -17,6 +17,16 @@ class Product(db.Model):
     asin = db.Column(db.String(50))
     title = db.Column(db.String(250))
 
+    def json(self, reviews=False):
+        data = {
+            'id': self.id,
+            'asin': self.asin,
+            'title': self.title
+        }
+        if reviews:
+            data['reviews'] = [review.json() for review in self.reviews]
+        return data
+
 
 class Review(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -24,6 +34,13 @@ class Review(db.Model):
     review = db.Column(db.String(250))
     product_id = db.Column(db.Integer, db.ForeignKey('product.id'))
     product = db.relationship(Product, backref=db.backref('reviews', lazy=True))
+
+    def json(self):
+        return {
+            'id': self.id,
+            'title': self.title,
+            'review': self.review,
+        }
 
 
 def init_db():
