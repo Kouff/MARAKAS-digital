@@ -1,4 +1,3 @@
-import os
 import csv
 from flask import Flask, request, views, jsonify
 from flask_sqlalchemy import SQLAlchemy
@@ -39,7 +38,7 @@ class Product(db.Model):
 class Review(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(250))
-    review = db.Column(db.String(250))
+    review = db.Column(db.String(6500))
     product_id = db.Column(db.Integer, db.ForeignKey('product.id'))
     product = db.relationship(Product, backref=db.backref('reviews', lazy=True))
 
@@ -57,20 +56,24 @@ def init_db():
             if obj.asin == asin:
                 return obj
 
+    products = Product.query.all()  # get all the products
+    asins = [product.asin for product in products]
     csv_path = "Products.csv"
     with open(csv_path, "r") as f_obj:  # open a file
         reader = csv.DictReader(f_obj)  # get data from the file
         for row in reader:
-            product = Product(asin=row['Asin'], title=row['Title'])  # create a new product
-            db.session.add(product)
+            if row['Asin'] not in asins:
+                product = Product(asin=row['Asin'], title=row['Title'])  # create a new product
+                db.session.add(product)
     csv_path = "Reviews.csv"
     products = Product.query.all()  # get all the products
     with open(csv_path, "r") as f_obj:  # open a file
         reader = csv.DictReader(f_obj)  # get data from the file
         for row in reader:
-            # create a new review
-            review = Review(review=row['Review'], title=row['Title'], product=find_product(products, row['Asin']))
-            db.session.add(review)
+            if row['Asin'] not in asins:
+                # create a new review
+                review = Review(review=row['Review'], title=row['Title'], product=find_product(products, row['Asin']))
+                db.session.add(review)
     db.session.commit()
 
 
@@ -116,10 +119,6 @@ app.add_url_rule('/products/', view_func=ProductListView.as_view('products_list'
 app.add_url_rule('/products/<int:id>/', view_func=ProductDetailView.as_view('products_detail'))
 
 if __name__ == "__main__":
-    engine = db.get_engine()
-    if not os.path.exists(db_name):  # if the db doesn`t exist
-        db.create_all()  # create the db
-        init_db()  # add data from .csv files to the db
-    elif not engine.dialect.has_table(engine, 'Product'):  # if the db is empty
-        init_db()  # add data from .csv files to the db
-    app.run()  # run server
+    db.create_all()
+    init_db()  # add data from .csv files to the db
+    app.run(host='0.0.0.0', port=8000)  # run server
