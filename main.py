@@ -122,4 +122,4 @@ if __name__ == "__main__":
         init_db()  # add data from .csv files to the db
     elif not engine.dialect.has_table(engine, 'Product'):  # if the db is empty
         init_db()  # add data from .csv files to the db
-    app.run()  # run server
+    app.run(host='0.0.0.0', port=8000)  # run server
