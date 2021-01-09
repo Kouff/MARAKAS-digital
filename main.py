@@ -1,7 +1,9 @@
 import os
 import csv
-from flask import Flask, request, views
+from flask import Flask, request, views, jsonify
 from flask_sqlalchemy import SQLAlchemy
+
+from exceptions import InvalidData
 
 db_name = 'db.sqlite3'
 
@@ -10,6 +12,11 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + db_name
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
+
+
+@app.errorhandler(InvalidData)
+def handle_invalid_usage(error):
+    return jsonify(error.to_dict()), error.status_code
 
 
 class Product(db.Model):
